@@ -11,7 +11,7 @@ on:
     - reopened
 
 env:
-  REGISTRY_IMAGE: ghcr.io/tbd
+  REGISTRY_IMAGE: ghcr.io/michael-mueller-git/vr2ar-converter-v2
 
 jobs:
   build:
