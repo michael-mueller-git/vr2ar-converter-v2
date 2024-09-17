@@ -14,8 +14,11 @@ RUN apt-get install ffmpeg -y
 RUN mkdir -p /app/checkpoints
 RUN wget -c https://huggingface.co/facebook/sapiens-seg-foreground-1b-torchscript/resolve/main/sapiens_1b_seg_foreground_epoch_8_torchscript.pt2?download=true -O /app/checkpoints/sapiens_1b_seg_foreground_epoch_8_torchscript.pt2
 
+COPY requirements.txt /app
+
+RUN pip install -r requirements.txt
+
 COPY . /app
 RUN chmod +x entrypoint.sh
 
-RUN pip install -r requirements.txt
 ENTRYPOINT ["/app/entrypoint.sh"]
