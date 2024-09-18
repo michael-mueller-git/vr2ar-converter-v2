@@ -88,7 +88,7 @@ def ffmpeg(cmd, progress, total_frames, process_start, process_end):
 
 def process(video, projection, progress=gr.Progress()):
     if video is None:
-        return None, "No video uploaded"
+        return None, None, "No video uploaded"
     
     progress(0, desc="Starting conversion")
     
@@ -120,7 +120,7 @@ def process(video, projection, progress=gr.Progress()):
             ]
             projection = "fisheye180"
             if not ffmpeg(cmd, progress, total_frames, 0.0, 0.2):
-                return None, "Convertion 1 failed"
+                return None, None, "Convertion 1 failed"
             
         else:
             output_path = temp_input_path
@@ -179,18 +179,18 @@ def process(video, projection, progress=gr.Progress()):
         ]
 
         if not ffmpeg(cmd, progress, total_frames, 0.8, 1.0):
-            return None, "Convertion 2 failed"
+            return None, None, "Convertion 2 failed"
 
         progress(1, desc="Conversion 2 complete")
 
-    return result_name, f"Conversion successful"
+    return mask_video, result_name, f"Conversion successful"
 
 def process_video(video, projection):
-    output_path, message = process(video, projection)
-    if output_path:
-        return gr.File(value=output_path, visible=True), message
+    mask_path, output_path, message = process(video, projection)
+    if mask_path and output_path:
+        return gr.File(value=mask_path, visible=True), gr.File(value=output_path, visible=True), message
     else:
-        return gr.File(visible=False), message
+        return gr.File(visible=False), gr.File(visible=False), message
 
 # Create Gradio interface
 with gr.Blocks() as demo:
@@ -198,6 +198,7 @@ with gr.Blocks() as demo:
     with gr.Row():
         input_video = gr.File(label="Upload Video (MKV or MP4)", file_types=["mkv", "mp4"])
         projection_dropdown = gr.Dropdown(choices=["eq", "fisheye180", "fisheye190", "fisheye200"], label="VR Video Format", value="eq")
+        mask_video = gr.File(label="Download Mask Video", visible=False)
         output_video = gr.File(label="Download Converted Video", visible=False)
     convert_button = gr.Button("Convert")
     status = gr.Textbox(label="Status")
@@ -205,7 +206,7 @@ with gr.Blocks() as demo:
     convert_button.click(
         fn=process_video,
         inputs=[input_video, projection_dropdown],
-        outputs=[output_video, status]
+        outputs=[mask_video, output_video, status]
     )
 
 if __name__ == "__main__":
