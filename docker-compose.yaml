@@ -3,13 +3,13 @@ services:
     build:
       context: .
     # image: 
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
+    #deploy:
+      #  resources:
+      #  reservations:
+      #    devices:
+      #      - driver: nvidia
+      #        count: all
+      #        capabilities: [gpu]
     ports:
       - "7860:7860"
     ipc: host

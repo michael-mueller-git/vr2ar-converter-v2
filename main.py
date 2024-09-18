@@ -57,7 +57,7 @@ class ImageProcessor:
 
         return image_array
 
-def ffmpeg(cmd, progress, total_frames):
+def ffmpeg(cmd, progress, total_frames, process_start, process_end):
     process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
             
     for line in process.stdout:
@@ -66,7 +66,7 @@ def ffmpeg(cmd, progress, total_frames):
             parts = line.split()
             try:
                 current_frame = int(parts[1])
-                progress((current_frame / total_frames), desc="Converting")
+                progress(process_start + (current_frame / total_frames) * (process_end - process_start), desc="Converting")
             except ValueError:
                 pass
     
@@ -112,13 +112,13 @@ def process(video, projection, progress=gr.Progress()):
                 output_path
             ]
             projection = "fisheye180"
-            if not ffmpeg(cmd, progress, total_frames):
+            if not ffmpeg(cmd, progress, total_frames, 0.0, 0.2):
                 return None, "Convertion 1 failed"
             
         else:
             output_path = temp_input_path
 
-        progress(0.333, desc="Conversion 1 complete")
+        progress(0.2, desc="Conversion 1 complete")
 
 
         image_processor = ImageProcessor()
@@ -137,7 +137,7 @@ def process(video, projection, progress=gr.Progress()):
             if not ret:
                 break
             current_frame += 1
-            progress((current_frame / total_frames), desc=f"Converting {current_frame}/{total_frames}")
+            progress(0.2 + (current_frame / total_frames) * 0.6, desc=f"Converting {current_frame}/{total_frames}")
 
             progress(1, desc="Conversion 1 complete")
             _, width = img.shape[:2]
@@ -172,7 +172,7 @@ def process(video, projection, progress=gr.Progress()):
             "-y"
         ]
 
-        if not ffmpeg(cmd, progress, total_frames):
+        if not ffmpeg(cmd, progress, total_frames, 0.8, 1.0):
             return None, "Convertion 2 failed"
 
         progress(1, desc="Conversion 2 complete")
