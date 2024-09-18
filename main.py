@@ -198,6 +198,7 @@ with gr.Blocks() as demo:
     with gr.Row():
         input_video = gr.File(label="Upload Video (MKV or MP4)", file_types=["mkv", "mp4"])
         projection_dropdown = gr.Dropdown(choices=["eq", "fisheye180", "fisheye190", "fisheye200"], label="VR Video Format", value="eq")
+    with gr.Row():
         mask_video = gr.File(label="Download Mask Video", visible=False)
         output_video = gr.File(label="Download Converted Video", visible=False)
     convert_button = gr.Button("Convert")
