@@ -146,7 +146,6 @@ def process(video, projection, progress=gr.Progress()):
             current_frame += 1
             progress(0.2 + (current_frame / total_frames) * 0.6, desc=f"Converting {current_frame}/{total_frames}")
 
-            progress(1, desc="Conversion 1 complete")
             _, width = img.shape[:2]
             imgL = img[:, :int(width/2)]
             imgR = img[:, int(width/2):]
