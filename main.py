@@ -50,9 +50,10 @@ class ImageProcessor:
         torch.cuda.empty_cache()
 
     def process_image(self, image: Image.Image):
-        input_tensor = self.transform_fn(image).unsqueeze(0)
         if self.cuda:
-            input_tensor.to("cuda")
+            input_tensor = self.transform_fn(image).unsqueeze(0).to("cuda")
+        else:
+            input_tensor = self.transform_fn(image).unsqueeze(0)
             
         seg_output = ModelManager.run_model(self.seg_model, input_tensor, image.height, image.width)
         seg_mask = (seg_output.argmax(dim=1) > 0).float().cpu().numpy()[0]
