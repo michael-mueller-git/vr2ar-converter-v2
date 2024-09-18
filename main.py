@@ -5,6 +5,7 @@ import tempfile
 import shutil
 import torch
 import cv2
+import gc
 
 from PIL import Image
 from torchvision import transforms
@@ -42,6 +43,11 @@ class ImageProcessor:
         ])
         self.cuda = torch.cuda.is_available()
         self.seg_model = ModelManager.load_model("sapiens_1b_seg_foreground_epoch_8_torchscript.pt2", self.cuda)
+
+    def __del__(self):
+        del self.seg_model
+        gc.collect()
+        torch.cuda.empty_cache()
 
     def process_image(self, image: Image.Image):
         input_tensor = self.transform_fn(image).unsqueeze(0)
