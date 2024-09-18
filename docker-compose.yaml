@@ -1,15 +1,15 @@
 services:
   vr2ar:
-    build:
-      context: .
-    # image: 
-    #deploy:
-      #  resources:
-      #  reservations:
-      #    devices:
-      #      - driver: nvidia
-      #        count: all
-      #        capabilities: [gpu]
+    # build:
+    #  context: .
+    image: "ghcr.io/michael-mueller-git/vr2ar-converter-v2:dev"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
     ports:
       - "7860:7860"
     ipc: host
