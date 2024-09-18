@@ -188,9 +188,9 @@ def process(video, projection, progress=gr.Progress()):
 def process_video(video, projection):
     output_path, message = process(video, projection)
     if output_path:
-        return gr.File.update(value=output_path, visible=True), message
+        return gr.File(value=output_path, visible=True), message
     else:
-        return gr.File.update(visible=False), message
+        return gr.File(visible=False), message
 
 # Create Gradio interface
 with gr.Blocks() as demo:
