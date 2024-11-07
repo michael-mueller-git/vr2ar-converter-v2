@@ -18,6 +18,9 @@ COPY requirements.txt /app
 
 RUN pip install -r requirements.txt
 
+# download model
+RUN python3 -c 'import segmentation_refinement; segmentation_refinement.Refiner(device="cpu")'
+
 COPY . /app
 RUN chmod +x entrypoint.sh
 

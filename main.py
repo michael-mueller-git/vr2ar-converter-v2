@@ -6,6 +6,7 @@ import shutil
 import torch
 import cv2
 import gc
+import segmentation_refinement as refine
 
 from PIL import Image
 from torchvision import transforms
@@ -86,7 +87,7 @@ def ffmpeg(cmd, progress, total_frames, process_start, process_end):
     return True
 
 
-def process(video, projection, progress=gr.Progress()):
+def process(video, projection, mode, progress=gr.Progress()):
     if video is None:
         return None, None, "No video uploaded"
     
@@ -139,12 +140,16 @@ def process(video, projection, progress=gr.Progress()):
             (int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)))
         )
         current_frame = 0
+        if "CascadePSP" in mode:
+            refiner = refine.Refiner(device='cuda:0' if torch.cuda.is_available() else 'cpu')
+        else:
+            refiner = None
         while cap.isOpened():
             ret, img = cap.read()
             if not ret:
                 break
-            current_frame += 1
             progress(0.2 + (current_frame / total_frames) * 0.6, desc=f"Converting {current_frame}/{total_frames}")
+            current_frame += 1
 
             _, width = img.shape[:2]
             imgL = img[:, :int(width/2)]
@@ -152,6 +157,10 @@ def process(video, projection, progress=gr.Progress()):
             imgL = image_processor.process_image(Image.fromarray(cv2.cvtColor(imgL, cv2.COLOR_BGR2RGB)))
             imgR = image_processor.process_image(Image.fromarray(cv2.cvtColor(imgR, cv2.COLOR_BGR2RGB)))
             combined_image = cv2.hconcat([imgL, imgR])
+            if refiner is not None:
+                if len(combined_image.shape) == 3:
+                    combined_image = cv2.cvtColor(combined_image, cv2.COLOR_BGR2GRAY)
+                combined_image = refiner.refine(img, combined_image, fast=False, L=900)
             _, binary = cv2.threshold(combined_image, 127, 255, cv2.THRESH_BINARY)
             out.write(binary)
 
@@ -185,8 +194,8 @@ def process(video, projection, progress=gr.Progress()):
 
     return mask_video, result_name, f"Conversion successful"
 
-def process_video(video, projection):
-    mask_path, output_path, message = process(video, projection)
+def process_video(video, projection, mode):
+    mask_path, output_path, message = process(video, projection, mode)
     if mask_path and output_path:
         return gr.File(value=mask_path, visible=True), gr.File(value=output_path, visible=True), message
     else:
@@ -195,9 +204,11 @@ def process_video(video, projection):
 # Create Gradio interface
 with gr.Blocks() as demo:
     gr.Markdown("# Video VR2AR Converter")
-    with gr.Row():
-        input_video = gr.File(label="Upload Video (MKV or MP4)", file_types=["mkv", "mp4"])
-        projection_dropdown = gr.Dropdown(choices=["eq", "fisheye180", "fisheye190", "fisheye200"], label="VR Video Format", value="eq")
+    with gr.Column():
+        input_video = gr.File(label="Upload Video (MKV or MP4)", file_types=["mkv", "mp4", "video"])
+        with gr.Row():
+            projection_dropdown = gr.Dropdown(choices=["eq", "fisheye180", "fisheye190", "fisheye200"], label="VR Video Format", value="eq")
+            mode_dropdown = gr.Dropdown(choices=["sapiens-seg-foreground", "sapiens-seg-foreground+CascadePSP"], label="Method", value="sapiens-seg-foreground")
     with gr.Row():
         mask_video = gr.File(label="Download Mask Video", visible=False)
         output_video = gr.File(label="Download Converted Video", visible=False)
@@ -206,7 +217,7 @@ with gr.Blocks() as demo:
     
     convert_button.click(
         fn=process_video,
-        inputs=[input_video, projection_dropdown],
+        inputs=[input_video, projection_dropdown, mode_dropdown],
         outputs=[mask_video, output_video, status]
     )
 
