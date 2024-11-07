@@ -161,6 +161,7 @@ def process(video, projection, mode, progress=gr.Progress()):
                 if len(combined_image.shape) == 3:
                     combined_image = cv2.cvtColor(combined_image, cv2.COLOR_BGR2GRAY)
                 combined_image = refiner.refine(img, combined_image, fast=False, L=900)
+                combined_image = cv2.cvtColor(combined_image, cv2.COLOR_GRAY2BGR)
             _, binary = cv2.threshold(combined_image, 127, 255, cv2.THRESH_BINARY)
             out.write(binary)
 
